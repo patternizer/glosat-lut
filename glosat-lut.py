@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------
 # PROGRAM: glosat-lut.py
 #-----------------------------------------------------------------------
-# Version 0.1
-# 22 May, 2021
+# Version 0.2
+# 23 May, 2021
 # Dr Michael Taylor
 # https://patternizer.github.io
 # patternizer AT gmail DOT com
@@ -15,9 +15,14 @@
 import numpy as np
 import pandas as pd
 import pickle
+import re
+import difflib
 
 # I/O libraries:
 import os, glob
+
+# ISO-3166 libraries:
+import pycountry
 
 #-----------------------------------------------------------------------------
 # SETTINGS
@@ -26,6 +31,16 @@ import os, glob
 fontsize = 16
 data_dir = 'DATA/'
 output_dir = 'OUT/'
+coords_dp = 2
+
+#-----------------------------------------------------------------------------
+# METHODS:
+#-----------------------------------------------------------------------------
+
+def strip_character(dataCol):
+    #ascii_alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+    r = re.compile(r'[^a-zA-Z !@#$%&*_+-=|\:";<>,./()[\]{}\']')
+    return r.sub('', dataCol)
 
 #-----------------------------------------------------------------------------
 # LOAD: inventories into dataframes
@@ -51,7 +66,6 @@ df_lut4 = pd.read_pickle(data_dir+'df_temp.pkl', compression='bz2')
 #-----------------------------------------------------------------------------
 
 print('constructing LUT #1 ...')
-
 
 stationcodes = []
 firstyears = []
@@ -89,18 +103,25 @@ lut1 = pd.DataFrame(columns=[
     'station_firstyear',
     'station_lastyear',
     'source_code1',
-    'source_code2'
+    'source_code2',
+    'source_lut',
+    'iso-3166',
+    'continent',
     ])
 lut1['station_code'] = df_lut1['cru_code']
-lut1['station_lat'] = [ int(np.round(df_lut1['lat'][i]*10)) for i in range(len(lut1)) ]
-lut1['station_lon'] = [ int(np.round(df_lut1['lon'][i]*10)) for i in range(len(lut1)) ]
+lut1['station_lat'] = [ int(np.round(df_lut1['lat'][i]*10**coords_dp)) for i in range(len(lut1)) ]
+lut1['station_lon'] = [ int(np.round(df_lut1['lon'][i]*10**coords_dp)) for i in range(len(lut1)) ]
 lut1['station_elevation'] = df_lut1['elev']
 lut1['station_name'] = df_lut1['station name']
 lut1['station_country'] = df_lut1['country']
 lut1['station_firstyear'] = df_lut1['firstyear']
 lut1['station_lastyear'] = df_lut1['lastyear']
 lut1['source_code1'] = df_lut1['station_id']
-lut1['source_code2'] = len(df_lut1['station_id'])*[str(-999)]
+lut1['source_code2'] = len(lut1)*[str(-999)]
+lut1['source_lut'] = len(lut1)*[1]
+lut1['iso-3166'] = len(lut1)*[str(-999)]
+lut1['continent'] = len(lut1)*[str(-999)]
+     
 lut1 = lut1.astype({'station_code': 'string', 'station_name': 'string', 'station_country': 'string', 'source_code1': 'string', 'source_code2': 'string'})
 
 # lut1[lut1.source_code==60677100000]['station_name']
@@ -188,11 +209,14 @@ lut2 = pd.DataFrame(columns=[
     'station_firstyear',
     'station_lastyear',
     'source_code1',
-    'source_code2'
+    'source_code2',
+    'source_lut',
+    'iso-3166',
+    'continent',
     ])
 lut2['station_code'] = df_lut2['cru_code']
-lut2['station_lat'] = [ int(np.round(df_lut2['latitude'][i]*10)) for i in range(len(lut2)) ]
-lut2['station_lon'] = [ int(np.round(df_lut2['longitude'][i]*10)) for i in range(len(lut2)) ]
+lut2['station_lat'] = [ int(np.round(df_lut2['latitude'][i]*10**coords_dp)) for i in range(len(lut2)) ]
+lut2['station_lon'] = [ int(np.round(df_lut2['longitude'][i]*10**coords_dp)) for i in range(len(lut2)) ]
 lut2['station_elevation'] = df_lut2['height_of_']
 lut2['station_name'] = df_lut2['station_na']
 lut2['station_country'] = df_lut2['Country']
@@ -200,6 +224,10 @@ lut2['station_firstyear'] = df_lut2['start_date']
 lut2['station_lastyear'] = df_lut2['end_date']
 lut2['source_code1'] = df_lut2['promary_id']
 lut2['source_code2'] = df_lut2['secondary_id']
+lut2['source_lut'] = len(lut2)*[2]
+lut2['iso-3166'] = df_lut2['ISO']
+lut2['continent'] = len(lut2)*[str(-999)]
+
 lut2 = lut2.astype({'station_code': 'string', 'station_name': 'string', 'station_country': 'string', 'source_code1': 'string', 'source_code2': 'string'})
 
 #-----------------------------------------------------------------------------
@@ -243,11 +271,14 @@ lut3 = pd.DataFrame(columns=[
     'station_firstyear',
     'station_lastyear',
     'source_code1',
-    'source_code2'
+    'source_code2',
+    'source_lut',
+    'iso-3166',
+    'continent',
     ])
 lut3['station_code'] = df_lut3['cru_code']
-lut3['station_lat'] = [ int(np.round(df_lut3['lat'][i]*10)) for i in range(len(lut3)) ]
-lut3['station_lon'] = [ int(np.round(df_lut3['lon'][i]*10)) for i in range(len(lut3)) ]
+lut3['station_lat'] = [ int(np.round(df_lut3['lat'][i]*10**coords_dp)) for i in range(len(lut3)) ]
+lut3['station_lon'] = [ int(np.round(df_lut3['lon'][i]*10**coords_dp)) for i in range(len(lut3)) ]
 lut3['station_elevation'] = df_lut3['elev']
 lut3['station_name'] = df_lut3['station_name']
 lut3['station_country'] = df_lut3['country']
@@ -255,6 +286,9 @@ lut3['station_firstyear'] = df_lut3['Temp_start_year']
 lut3['station_lastyear'] = df_lut3['Temp_end_year']
 lut3['source_code1'] = df_lut3['station_id']
 lut3['source_code2'] = len(df_lut3['station_id'])*[str(-999)]
+lut3['source_lut'] = len(lut3)*[3]
+lut3['iso-3166'] = len(lut3)*[str(-999)]
+lut3['continent'] = len(lut3)*[str(-999)]
 lut3 = lut3.astype({'station_code': 'string', 'station_name': 'string', 'station_country': 'string', 'source_code1': 'string', 'source_code2': 'string'})
 
 #-----------------------------------------------------------------------------
@@ -279,15 +313,18 @@ lut4 = pd.DataFrame(columns=[
     'station_firstyear',
     'station_lastyear',
     'source_code1',
-    'source_code2'
+    'source_code2',
+    'source_lut',
+    'iso-3166',
+    'continent',
     ])
 
 stationcodes = df_lut4['stationcode'].unique()
 lats = df_lut4.groupby('stationcode').mean()['stationlat'].values
 lons = df_lut4.groupby('stationcode').mean()['stationlon'].values
 elevations = df_lut4.groupby('stationcode').mean()['stationelevation'].values
-stationlats = pd.Series(lats*10.0).replace(np.nan,-999)
-stationlons = pd.Series(lons*10.0).replace(np.nan,-999)
+stationlats = pd.Series(lats*10**coords_dp).replace(np.nan,-999)
+stationlons = pd.Series(lons*10**coords_dp).replace(np.nan,-999)
 stationelevations = pd.Series(elevations).replace(np.nan,-999)
 nameslist = df_lut4.groupby(['stationcode','stationname']).mean().index
 stationnames = [ nameslist[i][1] for i in range(len(nameslist)) ]
@@ -307,6 +344,9 @@ lut4['station_firstyear'] = [ int(stationfirstyears[i]) for i in range(len(stati
 lut4['station_lastyear'] = [ int(stationlastyears[i]) for i in range(len(stationcodes)) ] 
 lut4['source_code1'] = len(df_lut4['stationcode'].unique())*[str(-999)]
 lut4['source_code2'] = len(df_lut4['stationcode'].unique())*[str(-999)]
+lut4['source_lut'] = len(lut4)*[4]
+lut4['iso-3166'] = len(lut4)*[str(-999)]
+lut4['continent'] = len(lut4)*[str(-999)]
 lut4 = lut4.astype({'station_code': 'string', 'station_name': 'string', 'station_country': 'string', 'source_code1': 'string', 'source_code2': 'string'})
 
 #-----------------------------------------------------------------------------
@@ -319,6 +359,594 @@ lut = pd.concat([lut1,lut2,lut3,lut4], axis=0).reset_index(drop=True)
 lut['station_name'] = [ str(lut['station_name'][i]).title() for i in range(len(lut)) ]
 lut['station_country'] = [ str(lut['station_country'][i]).upper() for i in range(len(lut)) ]
 lut = lut.astype({'station_code': 'string', 'station_name': 'string', 'station_country': 'string', 'source_code1': 'string', 'source_code2': 'string'})
+
+#-----------------------------------------------------------------------------
+# DEDUCE: ISO 3166 alpha-2 codes (from country names)
+#-----------------------------------------------------------------------------
+
+COUNTRY_TO_ALPHA2 = {
+    'Abkhazia': 'AB',
+    'Afghanistan': 'AF',
+    'Åland Islands': 'AX',
+    'Albania': 'AL',
+    'Algeria': 'DZ',
+    'American Samoa': 'AS',
+    'Andorra': 'AD',
+    'Angola': 'AO',
+    'Anguilla': 'AI',
+    'Antigua and Barbuda': 'AG',
+    'Argentina': 'AR',
+    'Armenia': 'AM',
+    'Aruba': 'AW',
+    'Australia': 'AU',
+    'Austria': 'AT',
+    'Azerbaijan': 'AZ',
+    'Bahamas': 'BS',
+    'Bahrain': 'BH',
+    'Bangladesh': 'BD',
+    'Barbados': 'BB',
+    'Belarus': 'BY',
+    'Belgium': 'BE',
+    'Belize': 'BZ',
+    'Benin': 'BJ',
+    'Bermuda': 'BM',
+    'Bhutan': 'BT',
+    'Bolivia': 'BO',
+    'Bonaire': 'BQ',
+    'Bosnia and Herzegovina': 'BA',
+    'Botswana': 'BW',
+    'Bouvet Island': 'BV',
+    'Brazil': 'BR',
+    'British Indian Ocean Territory': 'IO',
+    'British Virgin Islands': 'VG',
+    'Virgin Islands, British': 'VG',
+    'Brunei': 'BN',
+    'Brunei Darussalam': 'BN',
+    'Bulgaria': 'BG',
+    'Burkina Faso': 'BF',
+    'Burundi': 'BI',
+    'Cambodia': 'KH',
+    'Cameroon': 'CM',
+    'Canada': 'CA',
+    'Cape Verde': 'CV',
+    'Cayman Islands': 'KY',
+    'Central African Republic': 'CF',
+    'Chad': 'TD',
+    'Chile': 'CL',
+    'China': 'CN',
+    'Christmas Island': 'CX',
+    'Cocos (Keeling) Islands': 'CC',
+    'Colombia': 'CO',
+    'Comoros': 'KM',
+    'Congo': 'CG',
+    'Congo, Republic of': 'CG',
+    'Republic of the Congo': 'CG',
+    'Cook Islands': 'CK',
+    'Costa Rica': 'CR',
+    'Croatia': 'HR',
+    'Cuba': 'CU',
+    'Curaçao': 'CW',
+    'Cyprus': 'CY',
+    'Czech Republic': 'CZ',
+    'Congo, Democratic Republic of': 'CD',
+    'Democratic Republic of the Congo': 'CD',
+    'Denmark': 'DK',
+    'Djibouti': 'DJ',
+    'Dominica': 'DM',
+    'Dominican Republic': 'DO',
+    'East Timor': 'TP',
+    'Ecuador': 'EC',
+    'Egypt': 'EG',
+    'El Salvador': 'SV',
+    'Equatorial Guinea': 'GQ',
+    'Eritrea': 'ER',
+    'Estonia': 'EE',
+    'Ethiopia': 'ET',
+    'Falkland Islands': 'FK',
+    'Faroe Islands': 'FO',
+    'Fiji': 'FJ',
+    'Finland': 'FI',
+    'France': 'FR',
+    'French Guiana': 'GF',
+    'French Polynesia': 'PF',
+    'Gabon': 'GA',
+    'Gambia': 'GM',
+    'Georgia': 'GE',
+    'Germany': 'DE',
+    'Ghana': 'GH',
+    'Gibraltar': 'GI',
+    'Greece': 'GR',
+    'Greenland': 'GL',
+    'Grenada': 'GD',
+    'Guadeloupe': 'GP',
+    'Great Britain': 'GB',
+    'Guam': 'GU',
+    'Guatemala': 'GT',
+    'Guernsey': 'GG',
+    'Guinea': 'GN',
+    'Guinea-Bissau': 'GW',
+    'Guyana': 'GY',
+    'Haiti': 'HT',
+    'Heard Island and McDonald Islands': 'HM',
+    'Honduras': 'HN',
+    'Hong Kong': 'HK',
+    'Hungary': 'HU',
+    'Iceland': 'IS',
+    'India': 'IN',
+    'Indonesia': 'ID',
+    'Iran': 'IR',
+    'Iraq': 'IQ',
+    'Ireland': 'IE',
+    'Isle of Man': 'IM',
+    'Islamic Republic of Iran': 'IR',
+    'Israel': 'IL',
+    'Italy': 'IT',
+    'Ivory Coast': 'CI',
+    'Jamaica': 'JM',
+    'Japan': 'JP',
+    'Jersey': 'JE',
+    'Jordan': 'JO',
+    'Kazakhstan': 'KZ',
+    'Kenya': 'KE',
+    "Korea, Democratic People's Republic of": 'KP',
+    'Kiribati': 'KI',
+    'Korea, Republic Of': 'KR',
+    'Kosovo': 'XK',
+    'Kuwait': 'KW',
+    'Kyrgyzstan': 'KG',
+    'Laos': 'LA',
+    "Lao People's Democratic Republic": 'LA',
+    'Latvia': 'LV',
+    'Lebanon': 'LB',
+    'Lesotho': 'LS',
+    'Liberia': 'LR',
+    'Libya': 'LY',
+    'Liechtenstein': 'LI',
+    'Lithuania': 'LT',
+    'Luxembourg': 'LU',
+    'Macau': 'MO',
+    'Macedonia': 'MK',
+    'Macedonia, The Former Yugoslav Republic Of': 'MK',
+    'Madagascar': 'MG',
+    'Malawi': 'MW',
+    'Malaysia': 'MY',
+    'Maldives': 'MV',
+    'Mali': 'ML',
+    'Malta': 'MT',
+    'Marshall Islands': 'MH',
+    'Martinique': 'MQ',
+    'Mauritania': 'MR',
+    'Mauritius': 'MU',
+    'Mayotte': 'YT',
+    'Mexico': 'MX',
+    'Micronesia': 'FM',
+    'Micronesia, Federated States of': 'FM',
+    'Moldova': 'MD',
+    'Moldova, Republic Of': 'MD',
+    'Monaco': 'MC',
+    'Mongolia': 'MN',
+    'Montenegro': 'ME',
+    'Montserrat': 'MS',
+    'Morocco': 'MA',
+    'Mozambique': 'MZ',
+    'Myanmar': 'MM',
+    'Namibia': 'NA',
+    'Nauru': 'NR',
+    'Nepal': 'NP',
+    'Netherlands': 'NL',
+    'New Caledonia': 'NC',
+    'New Zealand': 'NZ',
+    'Nicaragua': 'NI',
+    'Niger': 'NE',
+    'Nigeria': 'NG',
+    'Niue': 'NU',
+    'Norfolk Island': 'NF',
+    'North Korea': 'KP',
+    'Northern Cyprus': 'CY',
+    'Northern Mariana Islands': 'MP',
+    'Norway': 'NO',
+    'Oman': 'OM',
+    'Pakistan': 'PK',
+    'Palau': 'PW',
+    'Palestine': 'PS',
+    'Panama': 'PA',
+    'Papua New Guinea': 'PG',
+    'Paraguay': 'PY',
+    'Peru': 'PE',
+    'Philippines': 'PH',
+    'Poland': 'PL',
+    'Portugal': 'PT',
+    'Puerto Rico': 'PR',
+    'Qatar': 'QA',
+    'Romania': 'RO',
+    'Russia': 'RU',
+    'Russian Federation': 'RU',
+    'Rwanda': 'RW',
+    'Réunion': 'RE',
+    'Saba': 'BQ',
+    'Saint Barthélemy': 'BL',
+    'Saint Helena, Ascension and Tristan da Cunha': 'SH',
+    'Saint Kitts and Nevis': 'KN',
+    'St. Kitts and Nevis': 'KN',
+    'Saint Lucia': 'LC',
+    'St. Lucia': 'LC',
+    'Saint Martin': 'MF',
+    'St. Martin': 'MF',
+    'Saint Pierre and Miquelon': 'PM',
+    'St. Pierre and Miquelon': 'PM',
+    'Saint Vincent and the Grenadines': 'VC',
+    'St. Vincent and The Grenadines': 'VC',
+    'Samoa': 'WS',
+    'San Marino': 'SM',
+    'Saudi Arabia': 'SA',
+    'Senegal': 'SN',
+    'Serbia': 'RS',
+    'Seychelles': 'SC',
+    'Sierra Leone': 'SL',
+    'Singapore': 'SG',
+    'Sint Eustatius': 'BQ',
+    'Slovakia': 'SK',
+    'Slovenia': 'SI',
+    'Solomon Islands': 'SB',
+    'Somalia': 'SO',
+    'Somaliland': 'SO',
+    'South Africa': 'ZA',
+    'South Georgia and the South Sandwich Islands': 'GS',
+    'South Korea': 'KR',
+    'South Ossetia': 'OS',
+    'South Sudan': 'SS',
+    'Spain': 'ES',
+    'Sri Lanka': 'LK',
+    'Sudan': 'SD',
+    'Suriname': 'SR',
+    'Svalbard': 'SJ',
+    'Swaziland': 'SZ',
+    'Sweden': 'SE',
+    'Switzerland': 'CH',
+    'Syria': 'SY',
+    'Syrian Arab Republic': 'SY',
+    'São Tomé and Príncipe': 'ST',
+    'Taiwan': 'TW',
+    'Taiwan, Province of China': 'TW',
+    'Tajikistan': 'TJ',
+    'Tanzania': 'TZ',
+    'Tanzania, United Republic Of': 'TZ',
+    'Thailand': 'TH',
+    'Togo': 'TG',
+    'Tokelau': 'TK',
+    'Tonga': 'TO',
+    'Trinidad and Tobago': 'TT',
+    'Tunisia': 'TN',
+    'Turkey': 'TR',
+    'Turkmenistan': 'TM',
+    'Turks and Caicos Islands': 'TC',
+    'Turks and Caicos': 'TC',
+    'Tuvalu': 'TV',
+    'Uganda': 'UG',
+    'Ukraine': 'UA',
+    'United Arab Emirates': 'AE',
+    'United Kingdom': 'GB',
+    'United States Virgin Islands': 'VI',
+    'United States': 'US',
+    'United States of America': 'US',
+    'Uruguay': 'UY',
+    'Uzbekistan': 'UZ',
+    'Vanuatu': 'VU',
+    'Venezuela': 'VE',
+    'Vietnam': 'VN',
+    'Wallis and Futuna': 'WF',
+    'Yemen': 'YE',
+    'Zambia': 'ZM',
+    'Zimbabwe': 'ZW',
+}
+
+#-----------------------------------------------------------------------------
+# DEDUCE: continent (from alpha-2 codes)
+#-----------------------------------------------------------------------------
+
+ALPHA2_TO_CONTINENT = {
+    'AB': 'Asia',
+    'AD': 'Europe',
+    'AE': 'Asia',
+    'AF': 'Asia',
+    'AG': 'North America',
+    'AI': 'North America',
+    'AL': 'Europe',
+    'AM': 'Asia',
+    'AO': 'Africa',
+    'AR': 'South America',
+    'AS': 'Oceania',
+    'AT': 'Europe',
+    'AU': 'Oceania',
+    'AW': 'North America',
+    'AX': 'Europe',
+    'AZ': 'Asia',
+    'BA': 'Europe',
+    'BB': 'North America',
+    'BD': 'Asia',
+    'BE': 'Europe',
+    'BF': 'Africa',
+    'BG': 'Europe',
+    'BH': 'Asia',
+    'BI': 'Africa',
+    'BJ': 'Africa',
+    'BL': 'North America',
+    'BM': 'North America',
+    'BN': 'Asia',
+    'BO': 'South America',
+    'BQ': 'North America',
+    'BR': 'South America',
+    'BS': 'North America',
+    'BT': 'Asia',
+    'BV': 'Antarctica',
+    'BW': 'Africa',
+    'BY': 'Europe',
+    'BZ': 'North America',
+    'CA': 'North America',
+    'CC': 'Asia',
+    'CD': 'Africa',
+    'CF': 'Africa',
+    'CG': 'Africa',
+    'CH': 'Europe',
+    'CI': 'Africa',
+    'CK': 'Oceania',
+    'CL': 'South America',
+    'CM': 'Africa',
+    'CN': 'Asia',
+    'CO': 'South America',
+    'CR': 'North America',
+    'CU': 'North America',
+    'CV': 'Africa',
+    'CW': 'North America',
+    'CX': 'Asia',
+    'CY': 'Asia',
+    'CZ': 'Europe',
+    'DE': 'Europe',
+    'DJ': 'Africa',
+    'DK': 'Europe',
+    'DM': 'North America',
+    'DO': 'North America',
+    'DZ': 'Africa',
+    'EC': 'South America',
+    'EE': 'Europe',
+    'EG': 'Africa',
+    'ER': 'Africa',
+    'ES': 'Europe',
+    'ET': 'Africa',
+    'FI': 'Europe',
+    'FJ': 'Oceania',
+    'FK': 'South America',
+    'FM': 'Oceania',
+    'FO': 'Europe',
+    'FR': 'Europe',
+    'GA': 'Africa',
+    'GB': 'Europe',
+    'GD': 'North America',
+    'GE': 'Asia',
+    'GF': 'South America',
+    'GG': 'Europe',
+    'GH': 'Africa',
+    'GI': 'Europe',
+    'GL': 'North America',
+    'GM': 'Africa',
+    'GN': 'Africa',
+    'GP': 'North America',
+    'GQ': 'Africa',
+    'GR': 'Europe',
+    'GS': 'South America',
+    'GT': 'North America',
+    'GU': 'Oceania',
+    'GW': 'Africa',
+    'GY': 'South America',
+    'HK': 'Asia',
+    'HM': 'Antarctica',
+    'HN': 'North America',
+    'HR': 'Europe',
+    'HT': 'North America',
+    'HU': 'Europe',
+    'ID': 'Asia',
+    'IE': 'Europe',
+    'IL': 'Asia',
+    'IM': 'Europe',
+    'IN': 'Asia',
+    'IO': 'Asia',
+    'IQ': 'Asia',
+    'IR': 'Asia',
+    'IS': 'Europe',
+    'IT': 'Europe',
+    'JE': 'Europe',
+    'JM': 'North America',
+    'JO': 'Asia',
+    'JP': 'Asia',
+    'KE': 'Africa',
+    'KG': 'Asia',
+    'KH': 'Asia',
+    'KI': 'Oceania',
+    'KM': 'Africa',
+    'KN': 'North America',
+    'KP': 'Asia',
+    'KR': 'Asia',
+    'KW': 'Asia',
+    'KY': 'North America',
+    'KZ': 'Asia',
+    'LA': 'Asia',
+    'LB': 'Asia',
+    'LC': 'North America',
+    'LI': 'Europe',
+    'LK': 'Asia',
+    'LR': 'Africa',
+    'LS': 'Africa',
+    'LT': 'Europe',
+    'LU': 'Europe',
+    'LV': 'Europe',
+    'LY': 'Africa',
+    'MA': 'Africa',
+    'MC': 'Europe',
+    'MD': 'Europe',
+    'ME': 'Europe',
+    'MF': 'North America',
+    'MG': 'Africa',
+    'MH': 'Oceania',
+    'MK': 'Europe',
+    'ML': 'Africa',
+    'MM': 'Asia',
+    'MN': 'Asia',
+    'MO': 'Asia',
+    'MP': 'Oceania',
+    'MQ': 'North America',
+    'MR': 'Africa',
+    'MS': 'North America',
+    'MT': 'Europe',
+    'MU': 'Africa',
+    'MV': 'Asia',
+    'MW': 'Africa',
+    'MX': 'North America',
+    'MY': 'Asia',
+    'MZ': 'Africa',
+    'NA': 'Africa',
+    'NC': 'Oceania',
+    'NE': 'Africa',
+    'NF': 'Oceania',
+    'NG': 'Africa',
+    'NI': 'North America',
+    'NL': 'Europe',
+    'NO': 'Europe',
+    'NP': 'Asia',
+    'NR': 'Oceania',
+    'NU': 'Oceania',
+    'NZ': 'Oceania',
+    'OM': 'Asia',
+    'OS': 'Asia',
+    'PA': 'North America',
+    'PE': 'South America',
+    'PF': 'Oceania',
+    'PG': 'Oceania',
+    'PH': 'Asia',
+    'PK': 'Asia',
+    'PL': 'Europe',
+    'PM': 'North America',
+    'PR': 'North America',
+    'PS': 'Asia',
+    'PT': 'Europe',
+    'PW': 'Oceania',
+    'PY': 'South America',
+    'QA': 'Asia',
+    'RE': 'Africa',
+    'RO': 'Europe',
+    'RS': 'Europe',
+    'RU': 'Europe',
+    'RW': 'Africa',
+    'SA': 'Asia',
+    'SB': 'Oceania',
+    'SC': 'Africa',
+    'SD': 'Africa',
+    'SE': 'Europe',
+    'SG': 'Asia',
+    'SH': 'Africa',
+    'SI': 'Europe',
+    'SJ': 'Europe',
+    'SK': 'Europe',
+    'SL': 'Africa',
+    'SM': 'Europe',
+    'SN': 'Africa',
+    'SO': 'Africa',
+    'SR': 'South America',
+    'SS': 'Africa',
+    'ST': 'Africa',
+    'SV': 'North America',
+    'SY': 'Asia',
+    'SZ': 'Africa',
+    'TC': 'North America',
+    'TD': 'Africa',
+    'TG': 'Africa',
+    'TH': 'Asia',
+    'TJ': 'Asia',
+    'TK': 'Oceania',
+    'TM': 'Asia',
+    'TN': 'Africa',
+    'TO': 'Oceania',
+    'TP': 'Asia',
+    'TR': 'Asia',
+    'TT': 'North America',
+    'TV': 'Oceania',
+    'TW': 'Asia',
+    'TZ': 'Africa',
+    'UA': 'Europe',
+    'UG': 'Africa',
+    'US': 'North America',
+    'UY': 'South America',
+    'UZ': 'Asia',
+    'VC': 'North America',
+    'VE': 'South America',
+    'VG': 'North America',
+    'VI': 'North America',
+    'VN': 'Asia',
+    'VU': 'Oceania',
+    'WF': 'Oceania',
+    'WS': 'Oceania',
+    'XK': 'Europe',
+    'YE': 'Asia',
+    'YT': 'Africa',
+    'ZA': 'Africa',
+    'ZM': 'Africa',
+    'ZW': 'Africa',
+}
+
+country_list = [ list(COUNTRY_TO_ALPHA2)[i] for i in range(len(COUNTRY_TO_ALPHA2)) ]
+alpha2_list = [ COUNTRY_TO_ALPHA2[list(COUNTRY_TO_ALPHA2)[i]] for i in range(len(COUNTRY_TO_ALPHA2)) ]
+
+#-----------------------------------------------------------------------------
+# FIX: Country names
+#-----------------------------------------------------------------------------
+
+station_country_fix = lut.station_country.apply(strip_character)
+station_country_list = []
+for i in range(len(lut)):
+    c = station_country_fix[i]
+    m = difflib.get_close_matches( c.title(), country_list, n=1, cutoff=0.5)        
+    if len(m) == 0:
+        a = '-999'
+    else:
+        a = m[0]
+    station_country_list.append(a)
+
+#-----------------------------------------------------------------------------
+# DEDUCE: ISO 3166-1 alpha-2 codes
+#-----------------------------------------------------------------------------
+
+# https://towardsdatascience.com/matching-country-information-in-python-7e1928583644
+# https://towardsdatascience.com/using-python-to-create-a-world-map-from-a-list-of-country-names-cd7480d03b10    
+#c = lut.station_country[0]
+#x = pycountry.countries.search_fuzzy(c)[0].alpha_2
+#x = pycountry.countries.get(alpha_2='GB').name
+
+#station_alpha2_list = [ pycountry.countries.search_fuzzy(lut.station_country[i])[0].alpha_2 for i in range(len(lut)) ] 
+#station_alpha2_list = [ COUNTRY_TO_ALPHA2[station_country_list[i]] for i in range(len(lut)) ]
+station_alpha2_list = []
+for i in range(len(lut)):
+    c = station_country_list[i]
+    if c == '-999':
+        a = '-999'
+    else:
+        a = COUNTRY_TO_ALPHA2[station_country_list[i]]
+    station_alpha2_list.append(a)
+
+#-----------------------------------------------------------------------------
+# DEDUCE: continents 
+#-----------------------------------------------------------------------------
+
+station_continent_list = []
+for i in range(len(lut)):
+    c = station_country_list[i]
+    if c == '-999':
+        a = '-999'
+    else:
+        a = ALPHA2_TO_CONTINENT[station_alpha2_list[i]]
+    station_continent_list.append(a)
+
+lut['station_country'] = station_country_list
+lut['iso-3166'] = station_alpha2_list
+lut['continent'] = station_continent_list
 
 #-----------------------------------------------------------------------------
 # SORT: LUTs
