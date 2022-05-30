@@ -3,8 +3,8 @@
 #-----------------------------------------------------------------------
 # PROGRAM: glosat-lut.py
 #-----------------------------------------------------------------------
-# Version 0.2
-# 23 May, 2021
+# Version 0.3
+# 25 May, 2022
 # Dr Michael Taylor
 # https://patternizer.github.io
 # patternizer AT gmail DOT com
@@ -31,7 +31,7 @@ import pycountry
 fontsize = 16
 data_dir = 'DATA/'
 output_dir = 'OUT/'
-coords_dp = 2
+coords_dp = 1
 
 #-----------------------------------------------------------------------------
 # METHODS:
@@ -39,7 +39,8 @@ coords_dp = 2
 
 def strip_character(dataCol):
     #ascii_alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
-    r = re.compile(r'[^a-zA-Z !@#$%&*_+-=|\:";<>,./()[\]{}\']')
+#    r = re.compile(r'[^a-zA-Z !@#$%&*_+-=|\:";<>,./()[\]{}\']')
+    r = re.compile(r'[^a-zA-Z !@#$%&*_+-=|\:";<>,./()]')
     return r.sub('', dataCol)
 
 #-----------------------------------------------------------------------------
@@ -77,13 +78,13 @@ for i in range(len(df_lut1)):
     else:                            
         stationcodes.append(-999)
     if str(df_lut1['temporalExtent'][i]) == 'nan':
-        firstyears.append(-999)
-        lastyears.append(-999)
+        firstyears.append(-9999)
+        lastyears.append(-9999)
     else:    
         firstyears.append(int(str(df_lut1['temporalExtent'][i])[0:4]))
         lastyears.append(int(str(df_lut1['temporalExtent'][i])[5:10]))
     if str(df_lut1['elev'][i]) == 'nan':
-        elevations.append(-999)
+        elevations.append(-9999)
     else:
         elevations.append(int(df_lut1['elev'][i]))
 df_lut1['cru_code'] = stationcodes
@@ -191,7 +192,7 @@ for i in range(len(df_lut2)):
     else:                            
         stationcodes.append(-999)        
     if str(df_lut2['height_of_'][i]) == 'nan':
-        elevations.append(-999)
+        elevations.append(-9999)
     else:
         elevations.append(int(df_lut2['height_of_'][i]))
 df_lut2['cru_code'] = stationcodes
@@ -253,7 +254,7 @@ for i in range(len(df_lut3)):
     else:                            
         stationcodes.append(-999)
     if str(df_lut3['elev'][i]) == 'nan':
-        elevations.append(-999)
+        elevations.append(-9999)
     else:
         elevations.append(int(df_lut3['elev'][i]))
 df_lut3['cru_code'] = stationcodes
@@ -324,8 +325,8 @@ lats = df_lut4.groupby('stationcode').mean()['stationlat'].values
 lons = df_lut4.groupby('stationcode').mean()['stationlon'].values
 elevations = df_lut4.groupby('stationcode').mean()['stationelevation'].values
 stationlats = pd.Series(lats*10**coords_dp).replace(np.nan,-999)
-stationlons = pd.Series(lons*10**coords_dp).replace(np.nan,-999)
-stationelevations = pd.Series(elevations).replace(np.nan,-999)
+stationlons = pd.Series(lons*10**coords_dp).replace(np.nan,-9999)
+stationelevations = pd.Series(elevations).replace(np.nan,-9999)
 nameslist = df_lut4.groupby(['stationcode','stationname']).mean().index
 stationnames = [ nameslist[i][1] for i in range(len(nameslist)) ]
 countrieslist = df_lut4.groupby(['stationcode','stationcountry']).mean().index
@@ -363,6 +364,8 @@ lut = lut.astype({'station_code': 'string', 'station_name': 'string', 'station_c
 #-----------------------------------------------------------------------------
 # DEDUCE: ISO 3166 alpha-2 codes (from country names)
 #-----------------------------------------------------------------------------
+
+print('loading country look-up tables ...')
 
 COUNTRY_TO_ALPHA2 = {
     'Abkhazia': 'AB',
@@ -422,13 +425,16 @@ COUNTRY_TO_ALPHA2 = {
     'Congo, Republic of': 'CG',
     'Republic of the Congo': 'CG',
     'Cook Islands': 'CK',
-    'Costa Rica': 'CR',
+    'Costa Rica': 'CR',    
+    "Cote-D'Ivoir": 'CI',
     'Croatia': 'HR',
     'Cuba': 'CU',
     'Curaçao': 'CW',
     'Cyprus': 'CY',
     'Czech Republic': 'CZ',
     'Congo, Democratic Republic of': 'CD',
+    'Democratic Kampuchea': 'KH',    
+    'Dem.P.Rep.Kor': 'KP',    
     'Democratic Republic of the Congo': 'CD',
     'Denmark': 'DK',
     'Djibouti': 'DJ',
@@ -438,6 +444,7 @@ COUNTRY_TO_ALPHA2 = {
     'Ecuador': 'EC',
     'Egypt': 'EG',
     'El Salvador': 'SV',
+    'England': 'GB',
     'Equatorial Guinea': 'GQ',
     'Eritrea': 'ER',
     'Estonia': 'EE',
@@ -486,16 +493,19 @@ COUNTRY_TO_ALPHA2 = {
     'Japan': 'JP',
     'Jersey': 'JE',
     'Jordan': 'JO',
+    'Kampuchea': 'KH',    
     'Kazakhstan': 'KZ',
     'Kenya': 'KE',
     "Korea, Democratic People's Republic of": 'KP',
     'Kiribati': 'KI',
     'Korea, Republic Of': 'KR',
+    'Korea, North': 'KP',
     'Kosovo': 'XK',
     'Kuwait': 'KW',
     'Kyrgyzstan': 'KG',
     'Laos': 'LA',
     "Lao People's Democratic Republic": 'LA',
+    "Lao P.D.R.": 'LA',        
     'Latvia': 'LV',
     'Lebanon': 'LB',
     'Lesotho': 'LS',
@@ -534,6 +544,7 @@ COUNTRY_TO_ALPHA2 = {
     'Nauru': 'NR',
     'Nepal': 'NP',
     'Netherlands': 'NL',
+    'Neth. Antille': 'NL',    
     'New Caledonia': 'NC',
     'New Zealand': 'NZ',
     'Nicaragua': 'NI',
@@ -545,7 +556,13 @@ COUNTRY_TO_ALPHA2 = {
     'Northern Cyprus': 'CY',
     'Northern Mariana Islands': 'MP',
     'Norway': 'NO',
-    'Oman': 'OM',
+    'Ocean Is(BR).': 'BR',    
+    'Ocean Is(FR).': 'FR',    
+    'Oman': 'OM',      
+#    'Pacific Oc.': 'XX',       
+    'Pacific Oc.': 'XX',       
+    'Pacific (US)': 'US',    
+    'Pacific (Us)': 'US',    
     'Pakistan': 'PK',
     'Palau': 'PW',
     'Palestine': 'PS',
@@ -565,7 +582,9 @@ COUNTRY_TO_ALPHA2 = {
     'Réunion': 'RE',
     'Saba': 'BQ',
     'Saint Barthélemy': 'BL',
-    'Saint Helena, Ascension and Tristan da Cunha': 'SH',
+    'Saint Helena, Ascension and Tristan da Cunha': 'SH',    
+    'St.Helena(BR)': 'SH',
+    'St.Helena (BR': 'SH',    
     'Saint Kitts and Nevis': 'KN',
     'St. Kitts and Nevis': 'KN',
     'Saint Lucia': 'LC',
@@ -579,6 +598,7 @@ COUNTRY_TO_ALPHA2 = {
     'Samoa': 'WS',
     'San Marino': 'SM',
     'Saudi Arabia': 'SA',
+    'Scotland': 'GB',
     'Senegal': 'SN',
     'Serbia': 'RS',
     'Seychelles': 'SC',
@@ -606,6 +626,7 @@ COUNTRY_TO_ALPHA2 = {
     'Syria': 'SY',
     'Syrian Arab Republic': 'SY',
     'São Tomé and Príncipe': 'ST',
+    'Sao Tome-And': 'ST',    
     'Taiwan': 'TW',
     'Taiwan, Province of China': 'TW',
     'Tajikistan': 'TJ',
@@ -624,16 +645,26 @@ COUNTRY_TO_ALPHA2 = {
     'Tuvalu': 'TV',
     'Uganda': 'UG',
     'Ukraine': 'UA',
-    'United Arab Emirates': 'AE',
+    'Uk': 'GB', # Added to handle abbreviated country name
+    'UK': 'GB', # Added to handle abbreviated country name
     'United Kingdom': 'GB',
-    'United States Virgin Islands': 'VI',
+    'United Arab Emirates': 'AE',
+    'U.A.E.': 'AE',    # Added to handle abbreviated country name
+    'United States Virgin Islands': 'VI',    
     'United States': 'US',
     'United States of America': 'US',
     'Uruguay': 'UY',
+    'Us': 'US', # Added to handle abbreviated country name
+    'US': 'US', # Added to handle abbreviated country name
+    'Usa': 'US', # Added to handle abbreviated country name
+    'USA': 'US', # Added to handle abbreviated country name
+    'Ussr': 'RU', # Added to handle abbreviated country name
+    'USSR': 'RU', # Added to handle abbreviated country name
     'Uzbekistan': 'UZ',
     'Vanuatu': 'VU',
     'Venezuela': 'VE',
     'Vietnam': 'VN',
+    'Wales': 'GB',
     'Wallis and Futuna': 'WF',
     'Yemen': 'YE',
     'Zambia': 'ZM',
@@ -885,6 +916,7 @@ ALPHA2_TO_CONTINENT = {
     'WF': 'Oceania',
     'WS': 'Oceania',
     'XK': 'Europe',
+    'XX': 'Oceania',
     'YE': 'Asia',
     'YT': 'Africa',
     'ZA': 'Africa',
@@ -899,6 +931,9 @@ alpha2_list = [ COUNTRY_TO_ALPHA2[list(COUNTRY_TO_ALPHA2)[i]] for i in range(len
 # FIX: Country names
 #-----------------------------------------------------------------------------
 
+print('fixing country names ...')
+
+lut['station_country'] = lut['station_country'].str.rstrip("-")
 station_country_fix = lut.station_country.apply(strip_character)
 station_country_list = []
 for i in range(len(lut)):
@@ -913,6 +948,8 @@ for i in range(len(lut)):
 #-----------------------------------------------------------------------------
 # DEDUCE: ISO 3166-1 alpha-2 codes
 #-----------------------------------------------------------------------------
+
+print('deducing ISO 3166 alpha-2 codes ...')
 
 # https://towardsdatascience.com/matching-country-information-in-python-7e1928583644
 # https://towardsdatascience.com/using-python-to-create-a-world-map-from-a-list-of-country-names-cd7480d03b10    
@@ -934,6 +971,8 @@ for i in range(len(lut)):
 #-----------------------------------------------------------------------------
 # DEDUCE: continents 
 #-----------------------------------------------------------------------------
+
+print('deducing continents ...')
 
 station_continent_list = []
 for i in range(len(lut)):

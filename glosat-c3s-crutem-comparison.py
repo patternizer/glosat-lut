@@ -44,6 +44,8 @@ stationcode = '619670' # Diego Garcia
 stationfile_cru = output_dir + '/' + stationcode + '_' + 'cru.txt'
 stationfile_c3s = output_dir + '/' + stationcode + '_' + 'c3s.txt'
 
+glosat_version = 'GloSAT.p04'
+
 #------------------------------------------------------------------------------
 # LOAD: GloSAT absolute temperature archive in pickled pandas dataframe format
 #------------------------------------------------------------------------------
@@ -62,6 +64,11 @@ station_data = df_temp[df_temp['stationcode']==df_temp['stationcode'].unique()[v
 station_metadata = df_temp[df_temp['stationcode']==df_temp['stationcode'].unique()[value]].iloc[0,range(14,23)]
 
 da = df_temp[df_temp['stationcode']==df_temp['stationcode'].unique()[value]]
+
+# TRIM: to start of Pandas datetime:
+
+da = da[ da.year >= 1678 ]
+
 ts_cru = np.array(da.iloc[:,1:13]).ravel()
 t_cru = pd.date_range(start=str(da.year.iloc[0]), periods=len(ts_cru), freq='M')   
         
@@ -189,12 +196,12 @@ t_c3s = pd.date_range(start=str(station_data[0][0]), periods=len(ts_c3s), freq='
 #-----------------------------------------------------------------------------
 
 figstr = 'glosat-versus-c3s' + '-' + station_code + '.png'
-titlestr = 'GloSAT.p03 v C3S QC monthly holdings: ' + stationname + '(' + station_code + ')'
+titlestr = glosat_version + ' v C3S QC monthly holdings: ' + stationname + '(' + station_code + ')'
 
 fig,ax = plt.subplots(figsize=(15,10))
 plt.plot(t_cru, ts_cru, color='purple', alpha=0.2, lw=1)
 plt.plot(t_c3s, ts_c3s, color='teal', alpha=0.2, lw=1)
-plt.plot(t_cru, pd.Series(ts_cru).rolling(window=12, center=True).mean(), color='purple', alpha=1.0, lw=3, label='GloSAT.p03: 1y MA')
+plt.plot(t_cru, pd.Series(ts_cru).rolling(window=12, center=True).mean(), color='purple', alpha=1.0, lw=3, label=glosat_version + ': 1y MA')
 plt.plot(t_c3s, pd.Series(ts_c3s).rolling(window=12, center=True).mean(), color='teal', alpha=1.0, lw=3, label='C3S QC: 1y MA')
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
 plt.tick_params(labelsize=fontsize)
