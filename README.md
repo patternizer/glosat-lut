@@ -1,5 +1,5 @@
-![image](https://github.com/patternizer/glosat-lut/blob/master/glosat-inventory-nyr-descending.png)
-![image](https://github.com/patternizer/glosat-lut/blob/master/location_map_glosat.png)
+![image](https://github.com/patternizer/glosat-lut/blob/master/PLOTS/glosat-inventory-nyr-descending.png)
+![image](https://github.com/patternizer/glosat-lut/blob/master/PLOTS/location_map_glosat.png)
 
 # glosat-lut
 
